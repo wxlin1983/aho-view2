@@ -1,8 +1,9 @@
 
 import sys
 import os
+from typing import List, Optional
 from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QFileDialog
-from PySide6.QtGui import QPainter, QColor, QKeySequence, QAction, QPixmap
+from PySide6.QtGui import QPainter, QColor, QKeySequence, QAction, QPixmap, QKeyEvent, QMouseEvent, QDragEnterEvent, QDropEvent, QResizeEvent
 from PySide6.QtCore import Qt, QSize
 
 from aho_view.core.pic import Pic
@@ -24,16 +25,16 @@ class AhoView(QMainWindow):
         window_size_mode (int): The current window sizing mode.
         qimglabel (QLabel): The label used to display the image.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
-        self.allaxiv = []
-        self.axiv_idx = 0
+        self.allaxiv: List[PicAxiv] = []
+        self.axiv_idx: int = 0
 
-        self.pic_rescale_mode = 0
-        self.window_size_mode = 0
+        self.pic_rescale_mode: int = 0
+        self.window_size_mode: int = 0
 
-        self.qimglabel = QLabel()
+        self.qimglabel: QLabel = QLabel()
         self.setCentralWidget(self.qimglabel)
 
         self.create_actions()
@@ -45,7 +46,7 @@ class AhoView(QMainWindow):
         self.setStyleSheet("background-color: black;")
 
 
-    def offset_both(self, axivm, picm):
+    def offset_both(self, axivm: int, picm: int) -> Optional[Pic]:
         """
         Gets the Pic object at a given offset from the current archive and picture.
 
@@ -59,7 +60,7 @@ class AhoView(QMainWindow):
         axiv = self.allaxiv[self.offset_idx(axivm)]
         return axiv.ptr(picm)
 
-    def offset_idx(self, offset):
+    def offset_idx(self, offset: int) -> int:
         """
         Calculates a new archive index based on an offset, with wrapping.
 
@@ -82,7 +83,7 @@ class AhoView(QMainWindow):
                 tmp_idx = len(self.allaxiv) - 1
         return tmp_idx
 
-    def change_axiv(self, offset):
+    def change_axiv(self, offset: int) -> int:
         """
         Changes the current archive.
 
@@ -102,7 +103,7 @@ class AhoView(QMainWindow):
         self.axiv_idx = tmp_idx
         return 0
 
-    def close_axiv(self, offset):
+    def close_axiv(self, offset: int) -> int:
         """
         Closes the archive at the given offset.
 
@@ -127,7 +128,7 @@ class AhoView(QMainWindow):
             self.setWindowTitle("The AHO Viewer")
         return 0
 
-    def open_axiv(self, directory):
+    def open_axiv(self, directory: str = '') -> int:
         """
         Opens a new archive from a directory.
 
@@ -149,7 +150,7 @@ class AhoView(QMainWindow):
             return 0
         return 1
     
-    def updatemc(self):
+    def updatemc(self) -> None:
         """
         Updates the scores of all images and pre-loads/unloads them.
 
@@ -182,7 +183,7 @@ class AhoView(QMainWindow):
         for p in tmp_all:
             p.score_add(2)
 
-    def plot(self):
+    def plot(self) -> None:
         """
         Displays the current image.
 
@@ -201,11 +202,11 @@ class AhoView(QMainWindow):
             self.updatemc()
             self.setWindowTitle(current_pic.name)
 
-    def toggle_plot(self):
+    def toggle_plot(self) -> None:
         """Clears the image display."""
         self.qimglabel.clear()
 
-    def toggle_fullscreen(self):
+    def toggle_fullscreen(self) -> None:
         """Toggles between fullscreen, maximized, and normal window modes."""
         if self.isFullScreen():
             self.showNormal()
@@ -214,7 +215,7 @@ class AhoView(QMainWindow):
         else:
             self.showMaximized()
 
-    def create_menus(self):
+    def create_menus(self) -> None:
         """Creates the main menu bar."""
         self.file_menu = self.menuBar().addMenu("&File")
         self.file_menu.addAction(self.opendir_act)
@@ -222,11 +223,11 @@ class AhoView(QMainWindow):
         self.file_menu.addSeparator()
         self.file_menu.addAction(self.exit_act)
 
-    def create_actions(self):
+    def create_actions(self) -> None:
         """Creates the actions for the menu bar."""
         self.opendir_act = QAction("Open &Directory...", self)
         self.opendir_act.setShortcut(QKeySequence.Open)
-        self.opendir_act.triggered.connect(self.open_axiv)
+        self.opendir_act.triggered.connect(lambda: self.open_axiv(''))
 
         self.close_act = QAction("Close Vie&w...", self)
         self.close_act.setShortcut(QKeySequence.Close)
@@ -236,7 +237,7 @@ class AhoView(QMainWindow):
         self.exit_act.setShortcut(QKeySequence.Quit)
         self.exit_act.triggered.connect(self.close)
 
-    def resizeEvent(self, event):
+    def resizeEvent(self, event: QResizeEvent) -> None:
         """
         Handles the window resize event.
 
@@ -245,7 +246,7 @@ class AhoView(QMainWindow):
         """
         self.plot()
 
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event: QKeyEvent) -> None:
         """
         Handles key press events for navigation.
 
@@ -287,7 +288,7 @@ class AhoView(QMainWindow):
         if current_pic_before != axiv.current_pic():
             self.plot()
 
-    def mouseReleaseEvent(self, event):
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         """
         Handles mouse release events for navigation.
 
@@ -311,7 +312,7 @@ class AhoView(QMainWindow):
         if current_pic_before != axiv.current_pic():
             self.plot()
 
-    def dragEnterEvent(self, event):
+    def dragEnterEvent(self, event: QDragEnterEvent) -> None:
         """
         Handles drag enter events.
 
@@ -323,7 +324,7 @@ class AhoView(QMainWindow):
         else:
             event.ignore()
 
-    def dropEvent(self, event):
+    def dropEvent(self, event: QDropEvent) -> None:
         """
         Handles drop events for opening files.
 

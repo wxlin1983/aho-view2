@@ -21,21 +21,21 @@ class Pic:
         original (QPixmap): The original, unscaled image data.
         scaled (QPixmap): The scaled image data, ready for display.
     """
-    def __init__(self, file_name=''):
-        self.name = file_name
-        self.score = 0
-        self.is_checked = False
-        self.is_showable = False
-        self.is_loaded = False
-        self.original = QPixmap()
-        self.scaled = QPixmap()
+    def __init__(self, file_name: str = '') -> None:
+        self.name: str = file_name
+        self.score: float = 0
+        self.is_checked: bool = False
+        self.is_showable: bool = False
+        self.is_loaded: bool = False
+        self.original: QPixmap = QPixmap()
+        self.scaled: QPixmap = QPixmap()
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Destructor to clean up QPixmap objects."""
         del self.scaled
         del self.original
 
-    def showable(self):
+    def showable(self) -> bool:
         """
         Checks if the picture can be shown.
 
@@ -48,7 +48,7 @@ class Pic:
             self.load()
         return self.is_showable
 
-    def load(self):
+    def load(self) -> bool:
         """
         Loads the image from disk into a QPixmap.
 
@@ -71,7 +71,7 @@ class Pic:
                 return True
         return False
 
-    def unload(self):
+    def unload(self) -> bool:
         """
         Unloads the image data from memory to free up resources.
         
@@ -84,7 +84,7 @@ class Pic:
             self.is_loaded = False
         return True
 
-    def score_add(self, n):
+    def score_add(self, n: float) -> float:
         """
         Adds a value to the image's score.
         
@@ -96,7 +96,7 @@ class Pic:
         """
         return self.score_set(self.score + n)
 
-    def score_set(self, n):
+    def score_set(self, n: float) -> float:
         """
         Sets the image's score.
 
@@ -117,7 +117,7 @@ class Pic:
             self.load()
         return self.score
 
-    def delete_file(self):
+    def delete_file(self) -> bool:
         """
         Deletes the image file from the filesystem.
         
@@ -135,7 +135,7 @@ class Pic:
                 return False
         return False
 
-    def scale_image(self, size: QSize, pic_rescale_mode):
+    def scale_image(self, size: QSize, pic_rescale_mode: int) -> bool:
         """
         Scales the image to the given size.
         
