@@ -1,6 +1,6 @@
 
 import os
-from pic import Pic
+from .pic import Pic
 
 
 class PicAxiv:

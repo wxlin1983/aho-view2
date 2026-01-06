@@ -5,8 +5,8 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QFileDialog
 from PySide6.QtGui import QPainter, QColor, QKeySequence, QAction, QPixmap
 from PySide6.QtCore import Qt, QSize
 
-from pic import Pic
-from picaxiv import PicAxiv
+from aho_view.core.pic import Pic
+from aho_view.core.picaxiv import PicAxiv
 
 
 class AhoView(QMainWindow):
@@ -334,14 +334,3 @@ class AhoView(QMainWindow):
         if mime_data.hasUrls():
             for url in mime_data.urls():
                 self.open_axiv(url.toLocalFile())
-
-def main():
-    """The main entry point of the application."""
-    app = QApplication(sys.argv)
-    window = AhoView()
-    window.show()
-    sys.exit(app.exec())
-
-
-if __name__ == '__main__':
-    main()
