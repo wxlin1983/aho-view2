@@ -210,7 +210,7 @@ class AhoView(QMainWindow):
             self.qimglabel.setAlignment(Qt.AlignCenter)
             self.qimglabel.setPixmap(current_pic.scaled)
             self.updatemc()
-            self.setWindowTitle(current_pic.name)
+            self.setWindowTitle(current_pic.pic_path)
 
     def toggle_plot(self) -> None:
         """Clears the image display."""

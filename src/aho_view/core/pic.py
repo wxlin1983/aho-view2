@@ -13,7 +13,7 @@ class Pic:
     application's predictive pre-loading system.
 
     Attributes:
-        name (str): The file path of the image.
+        pic_path (str): The file path of the image.
         score (float): The score of the image, used for pre-loading.
         is_checked (bool): Whether the image has been checked for showability.
         is_showable (bool): Whether the image can be shown (i.e., it exists and is a valid image).
@@ -23,7 +23,7 @@ class Pic:
     """
 
     def __init__(self, pic_path: str = "") -> None:
-        self.name: str = pic_path
+        self.pic_path: str = pic_path
         self.score: float = 0
         self.is_checked: bool = False
         self.is_showable: bool = False
@@ -64,8 +64,8 @@ class Pic:
 
         self.is_checked = True
         self.is_showable = False
-        if os.path.exists(self.name) and os.path.isfile(self.name):
-            self.original = QPixmap(self.name)
+        if os.path.exists(self.pic_path) and os.path.isfile(self.pic_path):
+            self.original = QPixmap(self.pic_path)
             if not self.original.isNull():
                 self.is_showable = True
                 self.is_loaded = True
@@ -127,9 +127,9 @@ class Pic:
         """
         if self.is_loaded:
             self.unload()
-        if os.path.exists(self.name) and os.path.isfile(self.name):
+        if os.path.exists(self.pic_path) and os.path.isfile(self.pic_path):
             try:
-                os.remove(self.name)
+                os.remove(self.pic_path)
                 self.is_showable = False
                 return True
             except OSError:
