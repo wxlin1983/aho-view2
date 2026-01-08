@@ -1,10 +1,16 @@
-
-import sys
+from __future__ import annotations
 import os
-from typing import List, Optional
-from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QFileDialog
-from PySide6.QtGui import QPainter, QColor, QKeySequence, QAction, QPixmap, QKeyEvent, QMouseEvent, QDragEnterEvent, QDropEvent, QResizeEvent
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtWidgets import QMainWindow, QLabel, QFileDialog
+from PySide6.QtGui import (
+    QKeySequence,
+    QAction,
+    QKeyEvent,
+    QMouseEvent,
+    QDragEnterEvent,
+    QDropEvent,
+    QResizeEvent,
+)
+from PySide6.QtCore import Qt
 
 from aho_view.core.pic import Pic
 from aho_view.core.picaxiv import PicAxiv
@@ -25,10 +31,11 @@ class AhoView(QMainWindow):
         window_size_mode (int): The current window sizing mode.
         qimglabel (QLabel): The label used to display the image.
     """
+
     def __init__(self) -> None:
         super().__init__()
 
-        self.allaxiv: List[PicAxiv] = []
+        self.allaxiv: list[PicAxiv] = []
         self.axiv_idx: int = 0
 
         self.pic_rescale_mode: int = 0
@@ -40,20 +47,19 @@ class AhoView(QMainWindow):
         self.create_actions()
         self.create_menus()
 
-        self.setWindowTitle('The AHO Viewer')
+        self.setWindowTitle("The AHO Viewer")
         self.setAcceptDrops(True)
         self.resize(800, 600)
         self.setStyleSheet("background-color: black;")
 
-
-    def offset_both(self, axivm: int, picm: int) -> Optional[Pic]:
+    def offset_both(self, axivm: int, picm: int) -> Pic | None:
         """
         Gets the Pic object at a given offset from the current archive and picture.
 
         Args:
             axivm (int): The offset from the current archive.
             picm (int): The offset from the current picture within that archive.
-        
+
         Returns:
             Pic or None: The Pic object at the given offset, or None if not found.
         """
@@ -66,13 +72,13 @@ class AhoView(QMainWindow):
 
         Args:
             offset (int): The offset from the current archive index.
-            
+
         Returns:
             int: The new archive index.
         """
         if not self.allaxiv or len(self.allaxiv) == 1 or offset == 0:
             return self.axiv_idx
-        
+
         tmp_idx = self.axiv_idx
         k = 1 if offset > 0 else -1
         for _ in range(abs(offset)):
@@ -89,17 +95,17 @@ class AhoView(QMainWindow):
 
         Args:
             offset (int): The offset from the current archive index.
-        
+
         Returns:
             int: 0 if the archive was changed, 1 otherwise.
         """
         if offset == 0 or not self.allaxiv:
             return 1
-        
+
         tmp_idx = self.offset_idx(offset)
         if tmp_idx == self.axiv_idx:
             return 1
-        
+
         self.axiv_idx = tmp_idx
         return 0
 
@@ -109,13 +115,13 @@ class AhoView(QMainWindow):
 
         Args:
             offset (int): The offset from the current archive index.
-            
+
         Returns:
             int: Always returns 0.
         """
         if not self.allaxiv:
             return 0
-        
+
         if len(self.allaxiv) > 1:
             idx_to_close = self.offset_idx(offset)
             del self.allaxiv[idx_to_close]
@@ -128,28 +134,30 @@ class AhoView(QMainWindow):
             self.setWindowTitle("The AHO Viewer")
         return 0
 
-    def open_axiv(self, directory: str = '') -> int:
+    def open_axiv(self, axiv_path: str = "") -> int:
         """
-        Opens a new archive from a directory.
+        Opens a new archive from a axiv_path.
 
         Args:
-            directory (str): The path to the directory. If empty, a dialog will be shown.
-        
+            axiv_path (str): The path to the axiv_path. If empty, a dialog will be shown.
+
         Returns:
             int: 0 if the archive was opened, 1 otherwise.
         """
-        if not directory:
-            directory = QFileDialog.getExistingDirectory(self, "Open a folder", os.path.expanduser("~"), QFileDialog.ShowDirsOnly)
+        if not axiv_path:
+            axiv_path = QFileDialog.getExistingDirectory(
+                self, "Open a folder", os.path.expanduser("~"), QFileDialog.ShowDirsOnly
+            )
 
-        if directory:
-            pic_folder = PicAxiv(directory)
+        if axiv_path:
+            pic_folder = PicAxiv(axiv_path)
             if pic_folder.showable():
                 self.allaxiv.insert(0, pic_folder)
                 self.axiv_idx = 0
                 self.plot()
             return 0
         return 1
-    
+
     def updatemc(self) -> None:
         """
         Updates the scores of all images and pre-loads/unloads them.
@@ -164,11 +172,11 @@ class AhoView(QMainWindow):
                 for p in axiv.axiv:
                     p.score_set(30 * (p.score_set(0) / total_score) - 1)
 
-        tmp_all = set()
-        
+        tmp_all: set[Pic] = set()
+
         pic_offsets = [0, 1, -1]
         axiv_offsets = [0]
-        
+
         for axiv_offset in axiv_offsets:
             for pic_offset in pic_offsets:
                 pic = self.offset_both(axiv_offset, pic_offset)
@@ -176,9 +184,11 @@ class AhoView(QMainWindow):
                     tmp_all.add(pic)
 
         pic = self.offset_both(0, 10)
-        if pic: tmp_all.add(pic)
+        if pic:
+            tmp_all.add(pic)
         pic = self.offset_both(0, -10)
-        if pic: tmp_all.add(pic)
+        if pic:
+            tmp_all.add(pic)
 
         for p in tmp_all:
             p.score_add(2)
@@ -193,7 +203,7 @@ class AhoView(QMainWindow):
         """
         if not self.allaxiv:
             return
-        
+
         current_pic = self.allaxiv[self.axiv_idx].current_pic()
         if current_pic and current_pic.showable():
             current_pic.scale_image(self.qimglabel.size(), self.pic_rescale_mode)
@@ -225,9 +235,9 @@ class AhoView(QMainWindow):
 
     def create_actions(self) -> None:
         """Creates the actions for the menu bar."""
-        self.opendir_act = QAction("Open &Directory...", self)
+        self.opendir_act = QAction("Open &Archive...", self)
         self.opendir_act.setShortcut(QKeySequence.Open)
-        self.opendir_act.triggered.connect(lambda: self.open_axiv(''))
+        self.opendir_act.triggered.connect(lambda: self.open_axiv(""))
 
         self.close_act = QAction("Close Vie&w...", self)
         self.close_act.setShortcut(QKeySequence.Close)
@@ -255,7 +265,7 @@ class AhoView(QMainWindow):
         """
         if not self.allaxiv:
             return
-        
+
         axiv = self.allaxiv[self.axiv_idx]
         current_pic_before = axiv.current_pic()
 
@@ -308,7 +318,7 @@ class AhoView(QMainWindow):
         else:
             super().mouseReleaseEvent(event)
             return
-        
+
         if current_pic_before != axiv.current_pic():
             self.plot()
 

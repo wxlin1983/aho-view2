@@ -1,4 +1,4 @@
-
+from __future__ import annotations
 import os
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import QSize, Qt
@@ -11,7 +11,7 @@ class Pic:
     image data from disk, unloading it to free up memory, and scaling it for
     display. It also manages a 'score' for the image, which is used by the
     application's predictive pre-loading system.
-    
+
     Attributes:
         name (str): The file path of the image.
         score (float): The score of the image, used for pre-loading.
@@ -21,8 +21,9 @@ class Pic:
         original (QPixmap): The original, unscaled image data.
         scaled (QPixmap): The scaled image data, ready for display.
     """
-    def __init__(self, file_name: str = '') -> None:
-        self.name: str = file_name
+
+    def __init__(self, pic_path: str = "") -> None:
+        self.name: str = pic_path
         self.score: float = 0
         self.is_checked: bool = False
         self.is_showable: bool = False
@@ -40,7 +41,7 @@ class Pic:
         Checks if the picture can be shown.
 
         This method will trigger a load if the image hasn't been checked yet.
-        
+
         Returns:
             bool: True if the image is showable, False otherwise.
         """
@@ -74,7 +75,7 @@ class Pic:
     def unload(self) -> bool:
         """
         Unloads the image data from memory to free up resources.
-        
+
         Returns:
             bool: Always returns True.
         """
@@ -87,10 +88,10 @@ class Pic:
     def score_add(self, n: float) -> float:
         """
         Adds a value to the image's score.
-        
+
         Args:
             n (float): The value to add to the score.
-            
+
         Returns:
             float: The new score.
         """
@@ -105,7 +106,7 @@ class Pic:
 
         Args:
             n (float): The new score.
-        
+
         Returns:
             float: The new score.
         """
@@ -120,7 +121,7 @@ class Pic:
     def delete_file(self) -> bool:
         """
         Deletes the image file from the filesystem.
-        
+
         Returns:
             bool: True if the file was deleted successfully, False otherwise.
         """
@@ -138,7 +139,7 @@ class Pic:
     def scale_image(self, size: QSize, pic_rescale_mode: int) -> bool:
         """
         Scales the image to the given size.
-        
+
         Args:
             size (QSize): The new size for the image.
             pic_rescale_mode (int): The scaling mode to use.
@@ -160,13 +161,18 @@ class Pic:
         # Scales the image to fit within the given size, keeping the aspect ratio.
         # It only rescales if the new size is different from the current scaled size.
         if pic_rescale_mode == 0:
-            if (size.height() / size.width() >= self.original.height() / self.original.width()):
+            if (
+                size.height() / size.width()
+                >= self.original.height() / self.original.width()
+            ):
                 if size.width() == self.scaled.width():
                     return False
             else:
                 if size.height() == self.scaled.height():
                     return False
-            self.scaled = self.original.scaled(size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            self.scaled = self.original.scaled(
+                size, Qt.KeepAspectRatio, Qt.SmoothTransformation
+            )
             return True
         # Mode 1: Original size.
         # Sets the scaled image to be the same as the original image.
@@ -178,20 +184,30 @@ class Pic:
         # Scales the image to the given size, ignoring the aspect ratio.
         elif pic_rescale_mode == 2:
             if self.scaled.size() != size:
-                self.scaled = self.original.scaled(size, Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+                self.scaled = self.original.scaled(
+                    size, Qt.IgnoreAspectRatio, Qt.SmoothTransformation
+                )
                 return True
         # Mode 3: Scale to height.
         # Scales the image to the given height, keeping the aspect ratio.
         elif pic_rescale_mode == 3:
             if self.scaled.height() != size.height():
-                self.scaled = self.original.scaled(2 * size.width(), size.height(), Qt.KeepAspectRatio,
-                                                     Qt.SmoothTransformation)
+                self.scaled = self.original.scaled(
+                    2 * size.width(),
+                    size.height(),
+                    Qt.KeepAspectRatio,
+                    Qt.SmoothTransformation,
+                )
                 return True
         # Mode 4: Scale to width.
         # Scales the image to the given width, keeping the aspect ratio.
         elif pic_rescale_mode == 4:
             if self.scaled.width() != size.width():
-                self.scaled = self.original.scaled(size.width(), 2 * size.height(), Qt.KeepAspectRatio,
-                                                     Qt.SmoothTransformation)
+                self.scaled = self.original.scaled(
+                    size.width(),
+                    2 * size.height(),
+                    Qt.KeepAspectRatio,
+                    Qt.SmoothTransformation,
+                )
                 return True
         return False

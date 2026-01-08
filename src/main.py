@@ -1,6 +1,8 @@
+from __future__ import annotations
 import sys
 from PySide6.QtWidgets import QApplication
 from aho_view.gui.main_window import AhoView
+
 
 def main():
     """The main entry point of the application."""
@@ -9,5 +11,6 @@ def main():
     window.show()
     sys.exit(app.exec())
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

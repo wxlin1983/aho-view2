@@ -1,6 +1,5 @@
-
+from __future__ import annotations
 import os
-from typing import List, Optional
 from PySide6.QtCore import QSize
 from .pic import Pic
 
@@ -19,27 +18,32 @@ class PicAxiv:
         axiv (list[Pic]): The list of Pic objects in the directory.
         pic_idx (int): The index of the current picture in the axiv list.
     """
-    def __init__(self, file_name: str = '') -> None:
-        self.name: str = file_name
+
+    def __init__(self, axiv_path: str = "") -> None:
+        self.name: str = axiv_path
         self.is_checked: bool = False
         self.is_showable: bool = False
-        self.axiv: List[Pic] = []
+        self.axiv: list[Pic] = []
         self.pic_idx: int = 0
 
-        pic_filters = ['.jpg', '.jpeg', '.png', '.bmp']
+        pic_filters = [".jpg", ".jpeg", ".png", ".bmp"]
 
-        if os.path.exists(file_name):
-            if os.path.isdir(file_name):
-                dir_list = [f for f in os.listdir(file_name) if os.path.splitext(f)[1].lower() in pic_filters]
+        if os.path.exists(axiv_path):
+            if os.path.isdir(axiv_path):
+                dir_list = [
+                    f
+                    for f in os.listdir(axiv_path)
+                    if os.path.splitext(f)[1].lower() in pic_filters
+                ]
                 if not dir_list:
                     self.is_checked = True
                     self.is_showable = False
                     return
 
-                self.axiv = [Pic(os.path.join(file_name, f)) for f in dir_list]
+                self.axiv = [Pic(os.path.join(axiv_path, f)) for f in dir_list]
                 self.pic_idx = 0
-            elif os.path.isfile(file_name):
-                self.axiv = [Pic(file_name)]
+            elif os.path.isfile(axiv_path):
+                self.axiv = [Pic(axiv_path)]
                 self.pic_idx = 0
         else:
             self.is_checked = True
@@ -56,13 +60,13 @@ class PicAxiv:
 
         Args:
             offset (int): The offset from the current index.
-        
+
         Returns:
             int: The new index.
         """
         if not self.axiv:
             return 0
-        
+
         new_idx = self.pic_idx
         if offset < 0:
             for _ in range(abs(offset)):
@@ -85,7 +89,7 @@ class PicAxiv:
         """
         if self.is_checked:
             return self.is_showable
-        
+
         for i, pic in enumerate(self.axiv):
             if pic.showable():
                 self.is_showable = True
@@ -100,10 +104,10 @@ class PicAxiv:
     def load(self, offset: int) -> bool:
         """
         Loads the picture at the given offset.
-        
+
         Args:
             offset (int): The offset from the current index.
-            
+
         Returns:
             bool: The result of the pic.load() call.
         """
@@ -114,12 +118,12 @@ class PicAxiv:
     def scale(self, offset: int, size: QSize, pic_rescale_mode: int) -> bool:
         """
         Scales the picture at the given offset.
-        
+
         Args:
             offset (int): The offset from the current index.
             size (QSize): The new size for the image.
             pic_rescale_mode (int): The scaling mode to use.
-            
+
         Returns:
             bool: The result of the pic.scale_image() call.
         """
@@ -127,13 +131,13 @@ class PicAxiv:
             return False
         return self.axiv[self.offset_idx(offset)].scale_image(size, pic_rescale_mode)
 
-    def ptr(self, m: int = 0) -> Optional[Pic]:
+    def ptr(self, m: int = 0) -> Pic | None:
         """
         Gets the Pic object at the given offset.
-        
+
         Args:
             m (int): The offset from the current index.
-            
+
         Returns:
             Pic or None: The Pic object at the given offset, or None if the archive is empty.
         """
@@ -141,13 +145,13 @@ class PicAxiv:
             return None
         return self.axiv[self.offset_idx(m)]
 
-    def mv(self, m: int = 0) -> Optional[Pic]:
+    def mv(self, m: int = 0) -> Pic | None:
         """
         Moves the current picture index by the given offset.
-        
+
         Args:
             m (int): The offset to move the index by.
-            
+
         Returns:
             Pic or None: The new current Pic object, or None if the archive is empty.
         """
@@ -156,10 +160,10 @@ class PicAxiv:
         self.pic_idx = self.offset_idx(m)
         return self.axiv[self.pic_idx]
 
-    def begin(self) -> Optional[Pic]:
+    def begin(self) -> Pic | None:
         """
         Moves the current picture index to the beginning of the list.
-        
+
         Returns:
             Pic or None: The first Pic object, or None if the archive is empty.
         """
@@ -168,10 +172,10 @@ class PicAxiv:
         self.pic_idx = 0
         return self.axiv[self.pic_idx]
 
-    def end(self) -> Optional[Pic]:
+    def end(self) -> Pic | None:
         """
         Moves the current picture index to the end of the list.
-        
+
         Returns:
             Pic or None: The last Pic object, or None if the archive is empty.
         """
@@ -180,10 +184,10 @@ class PicAxiv:
         self.pic_idx = len(self.axiv) - 1
         return self.axiv[self.pic_idx]
 
-    def current_pic(self) -> Optional[Pic]:
+    def current_pic(self) -> Pic | None:
         """
         Gets the current Pic object.
-        
+
         Returns:
             Pic or None: The current Pic object, or None if the archive is empty.
         """
