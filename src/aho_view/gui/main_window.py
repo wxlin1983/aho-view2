@@ -1,6 +1,5 @@
 from __future__ import annotations
-import os
-from PySide6.QtWidgets import QMainWindow, QLabel, QFileDialog
+from PySide6.QtWidgets import QMainWindow, QLabel
 from PySide6.QtGui import (
     QKeySequence,
     QAction,
@@ -44,10 +43,31 @@ class AhoView(QMainWindow):
         self.qimglabel: QLabel = QLabel()
         self.setCentralWidget(self.qimglabel)
 
+        self.help_label = QLabel(
+            """
+            <font color='white'>
+            <h2>Hotkeys</h2>
+            <p><b>H</b>: Toggle this help screen</p>
+            <p><b>Left/Right Arrow</b>: Next/Previous image</p>
+            <p><b>Page Up/Down</b>: Skip 10 images forward/backward</p>
+            <p><b>Home/End</b>: Go to the first/last image</p>
+            <p><b>Up/Down Arrow</b>: Switch to the previous/next archive</p>
+            <p><b>G</b>: Toggle fullscreen</p>
+            <p><b>Esc</b>: Clear the image view</p>
+            <p><b>Ctrl+O</b>: Open a new archive</p>
+            <p><b>Ctrl+W</b>: Close the current archive</p>
+            <p><b>Ctrl+Q</b>: Exit the application</p>
+            </font>
+            """,
+            self,
+        )
+        self.help_label.setAlignment(Qt.AlignCenter)
+        self.help_label.show()
+
         self.create_actions()
         self.create_menus()
 
-        self.setWindowTitle("The AHO Viewer")
+        self.setWindowTitle("The AHO Viewer - Help")
         self.setAcceptDrops(True)
         self.resize(800, 600)
         self.setStyleSheet("background-color: black;")
@@ -204,6 +224,7 @@ class AhoView(QMainWindow):
         if not self.allaxiv:
             return
 
+        self.help_label.hide()
         current_pic = self.allaxiv[self.axiv_idx].current_pic()
         if current_pic and current_pic.showable():
             current_pic.scale_image(self.qimglabel.size(), self.pic_rescale_mode)
@@ -211,6 +232,15 @@ class AhoView(QMainWindow):
             self.qimglabel.setPixmap(current_pic.scaled)
             self.updatemc()
             self.setWindowTitle(current_pic.pic_path)
+
+    def toggle_help(self) -> None:
+        """Toggles the help screen."""
+        if self.help_label.isVisible():
+            self.help_label.hide()
+            self.setWindowTitle("The AHO Viewer")
+        else:
+            self.help_label.show()
+            self.setWindowTitle("The AHO Viewer - Help")
 
     def toggle_plot(self) -> None:
         """Clears the image display."""
@@ -263,6 +293,10 @@ class AhoView(QMainWindow):
         Args:
             event (QKeyEvent): The key press event.
         """
+        if event.key() == Qt.Key_H:
+            self.toggle_help()
+            return
+
         if not self.allaxiv:
             return
 

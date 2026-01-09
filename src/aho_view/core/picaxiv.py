@@ -12,7 +12,7 @@ class PicAxiv:
     current navigation state within the list of images.
 
     Attributes:
-        name (str): The path to the directory.
+        axiv_path (str): The path to the directory.
         is_checked (bool): Whether the directory has been checked for showable images.
         is_showable (bool): Whether the directory contains any showable images.
         axiv (list[Pic]): The list of Pic objects in the directory.
@@ -20,7 +20,7 @@ class PicAxiv:
     """
 
     def __init__(self, axiv_path: str = "") -> None:
-        self.name: str = axiv_path
+        self.axiv_path: str = axiv_path
         self.is_checked: bool = False
         self.is_showable: bool = False
         self.axiv: list[Pic] = []
