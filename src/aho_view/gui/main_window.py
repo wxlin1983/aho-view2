@@ -71,7 +71,15 @@ class AhoView(QMainWindow):
         self.setWindowTitle("The AHO Viewer - Help")
         self.setAcceptDrops(True)
         self.resize(800, 600)
-        self.setStyleSheet("background-color: black;")
+        self.setStyleSheet(
+            """
+            QMainWindow { background-color: black; }
+            QMenuBar { background-color: black; color: white; }
+            QMenuBar::item:selected { background-color: #444444; }
+            QMenu { background-color: black; color: white; }
+            QMenu::item:selected { background-color: #444444; }
+            """
+        )
 
     def offset_both(self, axivm: int, picm: int) -> Pic | None:
         """
