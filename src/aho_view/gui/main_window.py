@@ -1,7 +1,9 @@
 from __future__ import annotations
 import os
+from importlib import resources
 from PySide6.QtWidgets import QMainWindow, QLabel, QFileDialog
 from PySide6.QtGui import (
+    QIcon,
     QKeySequence,
     QAction,
     QKeyEvent,
@@ -14,6 +16,8 @@ from PySide6.QtCore import Qt
 
 from aho_view.core.pic import Pic
 from aho_view.core.picaxiv import PicAxiv
+
+ICON_PATH = resources.files("aho_view") / "resources" / "ahoviewico.ico"
 
 
 class AhoView(QMainWindow):
@@ -69,6 +73,7 @@ class AhoView(QMainWindow):
         self.create_menus()
 
         self.setWindowTitle("The AHO Viewer - Help")
+        self.setWindowIcon(QIcon(str(ICON_PATH)))
         self.setAcceptDrops(True)
         self.resize(800, 600)
         self.setStyleSheet(
