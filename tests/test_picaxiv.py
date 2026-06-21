@@ -4,7 +4,18 @@ from aho_view.core.picaxiv import PicAxiv
 
 
 def _make_dir(tmp_path, png_bytes, names):
-    pic_exts = (".jpg", ".jpeg", ".png", ".bmp")
+    pic_exts = (
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".bmp",
+        ".gif",
+        ".webp",
+        ".tiff",
+        ".tif",
+        ".ico",
+        ".svg",
+    )
     images_dir = tmp_path / "images"
     images_dir.mkdir()
     for name in names:
@@ -18,11 +29,30 @@ def _make_dir(tmp_path, png_bytes, names):
 
 def test_scans_directory_and_filters_by_extension(tmp_path, png_bytes):
     dir_path = _make_dir(
-        tmp_path, png_bytes, ["a.png", "b.jpg", "c.txt", "d.bmp", "readme.md"]
+        tmp_path,
+        png_bytes,
+        [
+            "a.png",
+            "b.jpg",
+            "c.txt",
+            "d.bmp",
+            "e.gif",
+            "f.webp",
+            "g.tiff",
+            "h.svg",
+            "readme.md",
+        ],
     )
     axiv = PicAxiv(dir_path)
     names = sorted(os.path.basename(p.pic_path) for p in axiv.axiv)
-    assert names == ["a.png", "b.jpg", "d.bmp"]
+    assert names == ["a.png", "b.jpg", "d.bmp", "e.gif", "f.webp", "g.tiff", "h.svg"]
+
+
+def test_scans_directory_with_uppercase_extensions(tmp_path, png_bytes):
+    dir_path = _make_dir(tmp_path, png_bytes, ["A.PNG", "B.JPG", "C.GIF"])
+    axiv = PicAxiv(dir_path)
+    names = sorted(os.path.basename(p.pic_path) for p in axiv.axiv)
+    assert names == ["A.PNG", "B.JPG", "C.GIF"]
 
 
 def test_empty_directory_is_not_showable(tmp_path):

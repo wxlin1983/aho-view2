@@ -26,7 +26,18 @@ class PicAxiv:
         self.axiv: list[Pic] = []
         self.pic_idx: int = 0
 
-        pic_filters = [".jpg", ".jpeg", ".png", ".bmp"]
+        pic_filters = [
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".bmp",
+            ".gif",
+            ".webp",
+            ".tiff",
+            ".tif",
+            ".ico",
+            ".svg",
+        ]
 
         if os.path.exists(axiv_path):
             if os.path.isdir(axiv_path):
