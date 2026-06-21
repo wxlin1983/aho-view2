@@ -75,6 +75,7 @@ class AhoView(QMainWindow):
             self,
         )
         self.help_label.setAlignment(Qt.AlignCenter)
+        self.help_label.setWordWrap(True)
         self.help_label.show()
 
         self.create_actions()
@@ -84,6 +85,7 @@ class AhoView(QMainWindow):
         self.setWindowIcon(QIcon(str(ICON_PATH)))
         self.setAcceptDrops(True)
         self.resize(800, 600)
+        self._update_help_label_geometry()
         self.setStyleSheet(
             """
             QMainWindow { background-color: black; }
@@ -416,6 +418,10 @@ class AhoView(QMainWindow):
         self.exit_act.setShortcut(QKeySequence.Quit)
         self.exit_act.triggered.connect(self.close)
 
+    def _update_help_label_geometry(self) -> None:
+        """Resizes the help screen to fill the central widget's area."""
+        self.help_label.setGeometry(self.centralWidget().geometry())
+
     def resizeEvent(self, event: QResizeEvent) -> None:
         """
         Handles the window resize event.
@@ -423,6 +429,7 @@ class AhoView(QMainWindow):
         Args:
             event (QResizeEvent): The resize event.
         """
+        self._update_help_label_geometry()
         self.plot()
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
