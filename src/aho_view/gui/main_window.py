@@ -47,6 +47,7 @@ class AhoView(QMainWindow):
 
         self.allaxiv: list[PicAxiv] = []
         self.axiv_idx: int = 0
+        self._scored: set[Pic] = set()
 
         self.pic_rescale_mode: int = 0
         self.window_size_mode: int = 0
@@ -165,15 +166,31 @@ class AhoView(QMainWindow):
 
         if len(self.allaxiv) > 1:
             idx_to_close = self.offset_idx(offset)
+            self._forget(self.allaxiv[idx_to_close].axiv)
             del self.allaxiv[idx_to_close]
             if self.axiv_idx >= len(self.allaxiv):
                 self.axiv_idx = 0
             self.plot()
         else:
+            self._forget(self.allaxiv[0].axiv)
             self.allaxiv.clear()
             self.toggle_plot()
             self.setWindowTitle("The AHO Viewer")
         return 0
+
+    def _forget(self, pics: list[Pic]) -> None:
+        """
+        Unloads and stops tracking the given pictures' pre-load scores.
+
+        Used when an archive is closed or replaced so its pictures don't
+        stay referenced (and loaded in memory) via the pre-load working set.
+
+        Args:
+            pics (list[Pic]): The pictures to forget.
+        """
+        for p in pics:
+            p.unload()
+            self._scored.discard(p)
 
     def open_archives_dialog(self) -> int:
         """
@@ -212,6 +229,8 @@ class AhoView(QMainWindow):
         if not archives:
             return 1
 
+        for axiv in self.allaxiv:
+            self._forget(axiv.axiv)
         self.allaxiv = archives
         self.axiv_idx = 0
         self.plot()
@@ -289,15 +308,22 @@ class AhoView(QMainWindow):
         """
         Updates the scores of all images and pre-loads/unloads them.
 
-        This method implements the predictive loading mechanism. It adjusts the
-        scores of all images based on their proximity to the currently viewed
-        image, and then loads or unloads them based on their new scores.
+        This method implements the predictive loading mechanism. It adjusts
+        the scores of pictures near the current one, and then loads or
+        unloads them based on their new scores.
+
+        Only pictures that already have a nonzero score (self._scored) are
+        touched here, instead of every picture across every open archive —
+        every other picture's score is implicitly 0 already. This keeps the
+        cost proportional to the pre-load window, not the total library size.
         """
-        total_score = sum(p.score for axiv in self.allaxiv for p in axiv.axiv)
+        total_score = sum(p.score for p in self._scored)
         if total_score > 0:
-            for axiv in self.allaxiv:
-                for p in axiv.axiv:
-                    p.score_set(30 * (p.score_set(0) / total_score) - 1)
+            for p in list(self._scored):
+                old_score = p.score
+                p.score_set(30 * (old_score / total_score) - 1)
+                if p.score <= 0:
+                    self._scored.discard(p)
 
         tmp_all: set[Pic] = set()
 
@@ -319,6 +345,7 @@ class AhoView(QMainWindow):
 
         for p in tmp_all:
             p.score_add(2)
+            self._scored.add(p)
 
     def plot(self) -> None:
         """

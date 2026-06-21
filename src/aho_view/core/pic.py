@@ -31,11 +31,6 @@ class Pic:
         self.original: QPixmap = QPixmap()
         self.scaled: QPixmap = QPixmap()
 
-    def __del__(self) -> None:
-        """Destructor to clean up QPixmap objects."""
-        del self.scaled
-        del self.original
-
     def showable(self) -> bool:
         """
         Checks if the picture can be shown.

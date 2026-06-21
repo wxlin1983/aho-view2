@@ -46,22 +46,36 @@ pre-loaded.
 ## Predictive pre-loading
 
 `AhoView.updatemc()` (called from `plot()` on every navigation) implements a
-simple score-based pre-loading scheme so that flipping through images feels
+score-based pre-loading scheme so that flipping through images feels
 instant:
 
 1. Every `Pic` has a `score` (float). `score_set` loads the image once the
    score reaches `>= 1` and unloads it once the score drops to `<= 0`.
-2. On each navigation, all scores are decayed: `score_set(30 * old/total - 1)`
-   — a uniform decay shared across every loaded picture, weighted by their
-   current share of the total score. This keeps old/distant images from
-   accumulating loaded state forever.
+2. `AhoView._scored` tracks exactly the `Pic`s with a nonzero score — every
+   other picture's score is implicitly `0`, so only this small set needs to
+   be touched each navigation, not every picture in every open archive.
+   Each one is decayed: `score_set(30 * old_score/total - 1)`, a uniform
+   decay shared across the working set, weighted by each picture's current
+   share of the total score.
 3. The current image, its immediate neighbors (`offset` `-1`, `0`, `+1`), and
    the images 10 steps ahead/behind (matching the `Page Up`/`Page Down`
-   hotkeys) each get `+2` added to their score, which is enough to push them
-   over the load threshold.
+   hotkeys) each get `+2` added to their score (and are added to
+   `_scored`), enough to push them over the load threshold.
 
-The net effect: the visible image and a small ring of nearby images stay
-loaded in memory; everything else is unloaded as you move away from it.
+Because the decay is a *share* of the total rather than a fixed per-step
+amount, the working set isn't capped at just the handful of ring positions —
+it settles into an equilibrium around the formula's `30` constant (verified
+empirically: navigating repeatedly through a large archive stabilizes
+`len(_scored)` at roughly a dozen-plus pictures, not the full library) before
+older entries' shrinking share finally pushes them to `0` and they're
+evicted. The net effect is a warm cache of recently-visited/nearby images
+sized independently of total library size, not a single handful.
+
+`_scored` only ever holds `Pic`s belonging to currently-open archives:
+closing an archive (`close_axiv`) or replacing the whole list
+(`open_archives`) explicitly unloads and discards that archive's pictures
+via `_forget()` first, so they don't stay referenced (and loaded in memory)
+after being "closed."
 
 ## Scaling modes
 
