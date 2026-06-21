@@ -49,6 +49,19 @@ class Pic:
             self.load()
         return self.is_showable
 
+    def resolve_path(self) -> str | None:
+        """
+        Resolves the on-disk path to read image bytes from.
+
+        Subclasses backed by something other than a plain file (e.g. a zip
+        entry) can override this to lazily materialize the data elsewhere,
+        while ``pic_path`` stays a friendly display string.
+
+        Returns:
+            str or None: The filesystem path to load, or None if unavailable.
+        """
+        return self.pic_path
+
     def load(self) -> bool:
         """
         Loads the image from disk into a QPixmap.
@@ -64,8 +77,9 @@ class Pic:
 
         self.is_checked = True
         self.is_showable = False
-        if os.path.exists(self.pic_path) and os.path.isfile(self.pic_path):
-            self.original = QPixmap(self.pic_path)
+        path = self.resolve_path()
+        if path and os.path.exists(path) and os.path.isfile(path):
+            self.original = QPixmap(path)
             if not self.original.isNull():
                 self.is_showable = True
                 self.is_loaded = True

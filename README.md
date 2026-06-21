@@ -20,10 +20,22 @@ To run the application:
 uv run aho-view
 ```
 
-Open a directory or image file via "File" -> "Open Archive...", or by
-dragging and dropping a directory/file onto the window. Each opened
-directory or file becomes an "archive" that you can navigate and switch
-between.
+"File" has two ways to open content:
+
+- **View Archives...** (`Ctrl+Alt+O`) — pick a folder that itself contains
+  multiple archives (subfolders and/or zip files). Each one becomes a
+  separate archive you can switch between with `Up`/`Down`. This replaces
+  whatever was previously open.
+- **View Archive...** (`Ctrl+O`) — pick a folder, a single image, or a
+  `.zip` archive to view as one archive (you'll be asked "Folder..." or
+  "File..." to pick the right native dialog). Picking a single image opens
+  its containing folder as an archive and starts on that image, so you can
+  still browse its siblings. Added to the currently open archives.
+
+Dragging and dropping a folder, image, or zip onto the window behaves like
+"View Archive...". Zip archives are treated like a folder of images: a
+single top-level folder inside the zip is unwrapped automatically, and
+nested zip files are ignored.
 
 ### Hotkeys
 
@@ -36,7 +48,8 @@ between.
 | `Up` / `Down` | Switch to the previous / next archive |
 | `G` | Toggle fullscreen |
 | `Esc` | Clear the image view |
-| `Ctrl+O` | Open a new archive |
+| `Ctrl+Alt+O` | View archives in a folder |
+| `Ctrl+O` | View a single archive (folder/image/zip) |
 | `Ctrl+W` | Close the current archive |
 | `Ctrl+Q` | Exit the application |
 

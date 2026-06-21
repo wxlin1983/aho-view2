@@ -1,7 +1,7 @@
 from __future__ import annotations
 import os
 from importlib import resources
-from PySide6.QtWidgets import QMainWindow, QLabel, QFileDialog
+from PySide6.QtWidgets import QMainWindow, QLabel, QFileDialog, QMessageBox
 from PySide6.QtGui import (
     QIcon,
     QKeySequence,
@@ -15,9 +15,15 @@ from PySide6.QtGui import (
 from PySide6.QtCore import Qt
 
 from aho_view.core.pic import Pic
-from aho_view.core.picaxiv import PicAxiv
+from aho_view.core.picaxiv import PIC_FILTERS, PicAxiv, discover_archives
 
 ICON_PATH = resources.files("aho_view") / "resources" / "ahoviewico.ico"
+
+_FILE_FILTER = (
+    "Images and Archives ("
+    + " ".join(f"*{ext}" for ext in PIC_FILTERS)
+    + " *.zip);;All Files (*)"
+)
 
 
 class AhoView(QMainWindow):
@@ -59,7 +65,8 @@ class AhoView(QMainWindow):
             <p><b>Up/Down Arrow</b>: Switch to the previous/next archive</p>
             <p><b>G</b>: Toggle fullscreen</p>
             <p><b>Esc</b>: Clear the image view</p>
-            <p><b>Ctrl+O</b>: Open a new archive</p>
+            <p><b>Ctrl+Alt+O</b>: View archives in a folder</p>
+            <p><b>Ctrl+O</b>: View a single archive (folder/image/zip)</p>
             <p><b>Ctrl+W</b>: Close the current archive</p>
             <p><b>Ctrl+Q</b>: Exit the application</p>
             </font>
@@ -168,21 +175,107 @@ class AhoView(QMainWindow):
             self.setWindowTitle("The AHO Viewer")
         return 0
 
+    def open_archives_dialog(self) -> int:
+        """
+        Shows a folder picker and opens the archives found inside it.
+
+        Returns:
+            int: 0 if any archives were opened, 1 otherwise.
+        """
+        folder_path = QFileDialog.getExistingDirectory(
+            self,
+            "Open a folder of archives",
+            os.path.expanduser("~"),
+            QFileDialog.ShowDirsOnly,
+        )
+        return self.open_archives(folder_path)
+
+    def open_archives(self, folder_path: str) -> int:
+        """
+        Replaces the open archives with the ones found inside folder_path.
+
+        Each immediate subfolder or zip file inside folder_path that
+        contains showable images becomes its own archive. Loose image files
+        directly inside folder_path are ignored. Existing open archives are
+        left untouched if folder_path is invalid or no archives are found.
+
+        Args:
+            folder_path (str): The path to a folder containing archives.
+
+        Returns:
+            int: 0 if any archives were opened, 1 otherwise.
+        """
+        if not folder_path or not os.path.isdir(folder_path):
+            return 1
+
+        archives = discover_archives(folder_path)
+        if not archives:
+            return 1
+
+        self.allaxiv = archives
+        self.axiv_idx = 0
+        self.plot()
+        return 0
+
+    def open_archive_dialog(self) -> int:
+        """
+        Lets the user pick a folder or a file, then opens it as one archive.
+
+        Returns:
+            int: 0 if an archive was opened, 1 otherwise.
+        """
+        box = QMessageBox(self)
+        box.setWindowTitle("View Archive")
+        box.setText("Open a folder, or a single image/zip file?")
+        folder_btn = box.addButton("Folder...", QMessageBox.ButtonRole.AcceptRole)
+        file_btn = box.addButton("File...", QMessageBox.ButtonRole.AcceptRole)
+        box.addButton(QMessageBox.StandardButton.Cancel)
+        box.exec()
+
+        clicked = box.clickedButton()
+        if clicked is folder_btn:
+            return self.open_folder_dialog()
+        if clicked is file_btn:
+            return self.open_file_dialog()
+        return 1
+
+    def open_folder_dialog(self) -> int:
+        """
+        Shows a folder picker and opens the selected folder as an archive.
+
+        Returns:
+            int: 0 if an archive was opened, 1 otherwise.
+        """
+        axiv_path = QFileDialog.getExistingDirectory(
+            self, "Open a folder", os.path.expanduser("~"), QFileDialog.ShowDirsOnly
+        )
+        return self.open_axiv(axiv_path)
+
+    def open_file_dialog(self) -> int:
+        """
+        Shows a file picker and opens the selected image or zip as an archive.
+
+        Returns:
+            int: 0 if an archive was opened, 1 otherwise.
+        """
+        axiv_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Open an image or zip archive",
+            os.path.expanduser("~"),
+            _FILE_FILTER,
+        )
+        return self.open_axiv(axiv_path)
+
     def open_axiv(self, axiv_path: str = "") -> int:
         """
         Opens a new archive from a axiv_path.
 
         Args:
-            axiv_path (str): The path to the axiv_path. If empty, a dialog will be shown.
+            axiv_path (str): The path to a folder, image, or zip archive.
 
         Returns:
             int: 0 if the archive was opened, 1 otherwise.
         """
-        if not axiv_path:
-            axiv_path = QFileDialog.getExistingDirectory(
-                self, "Open a folder", os.path.expanduser("~"), QFileDialog.ShowDirsOnly
-            )
-
         if axiv_path:
             pic_folder = PicAxiv(axiv_path)
             if pic_folder.showable():
@@ -272,16 +365,21 @@ class AhoView(QMainWindow):
     def create_menus(self) -> None:
         """Creates the main menu bar."""
         self.file_menu = self.menuBar().addMenu("&File")
-        self.file_menu.addAction(self.opendir_act)
+        self.file_menu.addAction(self.openarchives_act)
+        self.file_menu.addAction(self.openarchive_act)
         self.file_menu.addAction(self.close_act)
         self.file_menu.addSeparator()
         self.file_menu.addAction(self.exit_act)
 
     def create_actions(self) -> None:
         """Creates the actions for the menu bar."""
-        self.opendir_act = QAction("Open &Archive...", self)
-        self.opendir_act.setShortcut(QKeySequence.Open)
-        self.opendir_act.triggered.connect(lambda: self.open_axiv(""))
+        self.openarchives_act = QAction("View &Archives...", self)
+        self.openarchives_act.setShortcut("Ctrl+Alt+O")
+        self.openarchives_act.triggered.connect(self.open_archives_dialog)
+
+        self.openarchive_act = QAction("View &Archive...", self)
+        self.openarchive_act.setShortcut(QKeySequence.Open)
+        self.openarchive_act.triggered.connect(self.open_archive_dialog)
 
         self.close_act = QAction("Close Vie&w...", self)
         self.close_act.setShortcut(QKeySequence.Close)

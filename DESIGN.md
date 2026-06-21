@@ -15,10 +15,10 @@ AhoView (gui/main_window.py)
   image, loads/unloads the `QPixmap` data, and produces a scaled `QPixmap`
   for display.
 - **`PicAxiv`** ([src/aho_view/core/picaxiv.py](src/aho_view/core/picaxiv.py))
-  — an ordered collection of `Pic`s, built either by scanning a directory for
-  image files (`.jpg`, `.jpeg`, `.png`, `.bmp`) or wrapping a single file
-  path. Tracks the currently selected index and supports relative
-  navigation with wraparound.
+  — an ordered collection of `Pic`s, built by scanning a directory for image
+  files (`PIC_FILTERS`), wrapping a single file path, or — if the path is a
+  zip file — listing the images inside it (see below). Tracks the currently
+  selected index and supports relative navigation with wraparound.
 - **`AhoView`** ([src/aho_view/gui/main_window.py](src/aho_view/gui/main_window.py))
   — the `QMainWindow`. Holds a list of open `PicAxiv` archives, handles
   keyboard/mouse/drag-and-drop input, and renders the current image into a
@@ -85,15 +85,73 @@ is a deliberate trick rather than a bug, though it is fragile for extreme
 aspect ratios (it assumes the doubled dimension is never actually the
 binding constraint).
 
+## Zip archives
+
+`PicAxiv` treats a `.zip` file (detected via `zipfile.is_zipfile`, not just
+the extension) like a directory of images:
+
+- `list_zip_image_entries` ([picaxiv.py](src/aho_view/core/picaxiv.py)) reads
+  the zip's entry list once (cheap metadata, same cost class as `os.listdir`)
+  and applies the same **shallow** semantics as real directories — entries
+  nested more than one level deep are ignored, matching the fact that
+  `os.listdir` doesn't recurse into subfolders either.
+- One exception: if the zip's top level contains nothing but a single
+  folder, that folder is transparently unwrapped one level, so the common
+  "zip of a single wrapping folder" case still works without requiring users
+  to dig into it.
+- Nested `.zip` entries and macOS resource-fork junk (`__MACOSX/`, `._*`)
+  are always ignored.
+- An empty result (no images found) leaves the `PicAxiv` in the same
+  `is_checked=True, is_showable=False` state as an empty directory.
+
+Each matching entry becomes a `ZipEntryPic`
+([src/aho_view/core/zip_pic.py](src/aho_view/core/zip_pic.py)), a `Pic`
+subclass that overrides `resolve_path()` instead of `load()` itself — `Pic`
+gained that seam specifically so subclasses can supply a different on-disk
+path while keeping `pic_path` as a friendly display string (e.g.
+`comic.zip/Comic/page1.png`, shown in the window title). The first time a
+`ZipEntryPic` needs to be read, `resolve_path()` decompresses just that one
+entry into a per-archive temp directory (`tempfile.mkdtemp`), using a
+synthetic `00000.png`-style filename rather than the entry's own name to
+avoid zip-slip path traversal from untrusted zip contents. Decompression
+therefore happens lazily, driven by the same predictive pre-loading in
+`updatemc()` that decides when any other `Pic` gets loaded. Extracted files
+stay cached in the temp directory for the archive's lifetime (no
+re-extraction as the pre-loader's scores cycle); the whole temp directory is
+removed in `PicAxiv.__del__`.
+
 ## Archives and navigation
 
 `AhoView.allaxiv` is a list of `PicAxiv`, with `axiv_idx` pointing at the
-active one. Opening a path (`Ctrl+O` or drag-and-drop) inserts a new
-`PicAxiv` at the front of the list and makes it active. `Up`/`Down` cycle
+active one. Opening a single path (`Ctrl+O` or drag-and-drop, via
+`open_axiv`) inserts a new `PicAxiv` at the front of the list and makes it
+active, leaving any previously open archives in place. `Up`/`Down` cycle
 between open archives (wrapping); `Left`/`Right`, `Page Up`/`Page Down`,
-`Home`/`End` move within the active archive's picture list (also wrapping).
-`offset_idx` on both `AhoView` and `PicAxiv` implement this relative,
-wraparound indexing.
+`Home`/`End` move within the active archive's picture list (also
+wrapping). `offset_idx` on both `AhoView` and `PicAxiv` implement this
+relative, wraparound indexing.
+
+`Ctrl+O` ("View Archive...") is one menu action backed by
+`open_archive_dialog`, which shows a small `QMessageBox` asking whether to
+pick a folder or a file — because a single native `QFileDialog` reliably
+selecting *either* a folder or a file turned out not to work in practice.
+The chooser just delegates to `open_folder_dialog`/`open_file_dialog`
+(plain `QFileDialog.getExistingDirectory`/`getOpenFileName`), both of which
+funnel into the same `open_axiv`.
+
+Selecting a plain image file (rather than a folder or zip) doesn't wrap
+just that one file — `PicAxiv._init_from_image_file`
+([picaxiv.py](src/aho_view/core/picaxiv.py)) scans the image's containing
+folder the same way `_init_from_dir` would, and points `pic_idx` at the
+selected file, so its siblings stay navigable.
+
+`Ctrl+Alt+O` ("View Archives...", `AhoView.open_archives`) is a separate,
+**replacing** flow for browsing a "library": given a folder, module-level
+`discover_archives` ([picaxiv.py](src/aho_view/core/picaxiv.py)) builds one
+`PicAxiv` per immediate subfolder/zip file that actually contains showable
+images (loose images directly in the selected folder are ignored — they
+aren't archives themselves), sorted by name, and `open_archives` replaces
+`self.allaxiv` outright rather than inserting like `open_axiv` does.
 
 ## Testing
 

@@ -71,6 +71,25 @@ def test_single_file_path_is_loaded(valid_image):
     assert axiv.axiv[0].pic_path == valid_image
 
 
+def test_selecting_image_with_siblings_lists_whole_folder(tmp_path, png_bytes):
+    dir_path = _make_dir(tmp_path, png_bytes, ["a.png", "b.jpg", "c.png"])
+    selected = os.path.join(dir_path, "b.jpg")
+
+    axiv = PicAxiv(selected)
+    names = sorted(os.path.basename(p.pic_path) for p in axiv.axiv)
+    assert names == ["a.png", "b.jpg", "c.png"]
+    assert os.path.basename(axiv.axiv[axiv.pic_idx].pic_path) == "b.jpg"
+
+
+def test_showable_does_not_clobber_preselected_pic_idx(tmp_path, png_bytes):
+    dir_path = _make_dir(tmp_path, png_bytes, ["a.png", "b.jpg", "c.png"])
+    selected = os.path.join(dir_path, "b.jpg")
+
+    axiv = PicAxiv(selected)
+    assert axiv.showable() is True
+    assert os.path.basename(axiv.current_pic().pic_path) == "b.jpg"
+
+
 def test_offset_idx_wraps_forward(tmp_path, png_bytes):
     dir_path = _make_dir(tmp_path, png_bytes, ["a.png", "b.png", "c.png"])
     axiv = PicAxiv(dir_path)
