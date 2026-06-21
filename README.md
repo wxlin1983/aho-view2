@@ -64,3 +64,13 @@ uv run pytest        # run the test suite
 uv run ruff check .  # lint
 uv run ruff format . # format
 ```
+
+### Building a standalone binary
+
+```bash
+./scripts/build.sh
+```
+
+Builds a single-file, windowed binary at `dist/aho-view` using
+[PyInstaller](https://pyinstaller.org/) (installed on demand via the `build`
+dependency group). Run it again any time to rebuild after code changes.
