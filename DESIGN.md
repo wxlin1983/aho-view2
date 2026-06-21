@@ -24,6 +24,10 @@ AhoView (gui/main_window.py)
   keyboard/mouse/drag-and-drop input, and renders the current image into a
   single `QLabel`.
 
+The package exposes a `main()` entry point in
+[src/aho_view/\_\_main\_\_.py](src/aho_view/__main__.py), wired up as the
+`aho-view` console script in `pyproject.toml` (`uv run aho-view`).
+
 ## Lazy loading and "checked" state
 
 Both `Pic` and `PicAxiv` use a `is_checked` / `is_showable` pair instead of

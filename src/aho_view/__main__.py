@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QApplication
 from aho_view.gui.main_window import AhoView
 
 
-def main():
+def main() -> None:
     """The main entry point of the application."""
     app = QApplication(sys.argv)
     window = AhoView()
